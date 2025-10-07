@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/axios"; // ✅ use your axios instance
 import BetModal from "../components/BetModal";
 
 export default function Home() {
@@ -7,12 +7,13 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [selectedBet, setSelectedBet] = useState(null); // { match, team }
 
+  // ✅ Fetch matches from backend
   const fetchMatches = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/matches");
+      const res = await api.get("/matches");
       setMatches(res.data.matches || res.data);
     } catch (err) {
-      console.error("Error fetching matches:", err);
+      console.error("❌ Error fetching matches:", err.message);
     } finally {
       setLoading(false);
     }
@@ -20,6 +21,8 @@ export default function Home() {
 
   useEffect(() => {
     fetchMatches();
+
+    // Auto refresh every 15s
     const interval = setInterval(fetchMatches, 15000);
     return () => clearInterval(interval);
   }, []);
@@ -28,38 +31,40 @@ export default function Home() {
   const live = matches.filter((m) => m.status === "LIVE");
 
   return (
-    <div className="p-6 space-y-10">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 md:p-8 space-y-10">
       {/* ✅ LIVE MATCHES */}
       {live.length > 0 && (
         <section>
-          <h2 className="text-3xl font-bold text-green-600 mb-6">
-            Live Matches
+          <h2 className="text-2xl sm:text-3xl font-bold text-green-600 mb-6 text-center sm:text-left">
+            🔴 Live Matches
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {live.map((m) => {
               const [teamA, teamB] = m.title.split(" vs ");
               return (
                 <div
                   key={m._id}
-                  className="bg-white border border-green-200 rounded-xl shadow-md p-5"
+                  className="bg-white border border-green-200 rounded-2xl shadow-md hover:shadow-lg transition p-5 flex flex-col justify-between"
                 >
-                  <h3 className="text-lg font-semibold text-green-700 mb-1">
-                    {teamA} vs {teamB}
-                  </h3>
-                  <p className="text-gray-500 text-sm mb-4">
-                    Started: {new Date(m.startAt).toLocaleString()}
-                  </p>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-semibold text-green-700 mb-1 text-center sm:text-left">
+                      {teamA} vs {teamB}
+                    </h3>
+                    <p className="text-gray-500 text-xs sm:text-sm mb-4 text-center sm:text-left">
+                      Started: {new Date(m.startAt).toLocaleString()}
+                    </p>
+                  </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3 mt-auto">
                     <button
                       onClick={() => setSelectedBet({ match: m, team: teamA })}
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-sm font-medium transition"
                     >
                       Bet on {teamA}
                     </button>
                     <button
                       onClick={() => setSelectedBet({ match: m, team: teamB })}
-                      className="flex-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-md text-sm font-medium"
+                      className="flex-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-md text-sm font-medium transition"
                     >
                       Bet on {teamB}
                     </button>
@@ -74,27 +79,27 @@ export default function Home() {
       {/* ✅ UPCOMING MATCHES */}
       {upcoming.length > 0 && (
         <section>
-          <h2 className="text-3xl font-bold text-cyan-600 mb-6">
-            Upcoming Matches
+          <h2 className="text-2xl sm:text-3xl font-bold text-cyan-600 mb-6 text-center sm:text-left">
+            🕒 Upcoming Matches
           </h2>
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {upcoming.map((m) => {
               const [teamA, teamB] = m.title.split(" vs ");
               return (
                 <div
                   key={m._id}
-                  className="bg-white border rounded-xl shadow p-4 hover:shadow-lg transition"
+                  className="bg-white border border-gray-200 rounded-2xl shadow p-5 hover:shadow-lg transition"
                 >
-                  <h3 className="font-semibold text-lg text-gray-800 mb-1">
+                  <h3 className="font-semibold text-lg text-gray-800 mb-1 text-center sm:text-left">
                     {teamA} vs {teamB}
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 text-center sm:text-left">
                     Toss Time:{" "}
                     <span className="font-medium">
                       {new Date(m.startAt).toLocaleString()}
                     </span>
                   </p>
-                  <p className="mt-2 text-xs text-gray-500 italic">
+                  <p className="mt-2 text-xs text-gray-500 italic text-center sm:text-left">
                     Coming soon...
                   </p>
                 </div>
@@ -104,9 +109,10 @@ export default function Home() {
         </section>
       )}
 
+      {/* ✅ NO MATCHES */}
       {!loading && live.length === 0 && upcoming.length === 0 && (
-        <p className="text-gray-500 text-center text-lg">
-          No active or upcoming matches right now.
+        <p className="text-gray-500 text-center text-lg font-medium">
+          No active or upcoming matches right now ⚡
         </p>
       )}
 
