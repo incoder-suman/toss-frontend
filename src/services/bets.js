@@ -1,31 +1,58 @@
 import axios from "axios";
 
-// ✅ Base configuration for all API calls
+/* -------------------------------------------------------------------
+ 🌍 GLOBAL AXIOS INSTANCE (Render + Vercel Compatible)
+------------------------------------------------------------------- */
+
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  // ✅ Use environment variable from .env file
+  baseURL: `${import.meta.env.VITE_API_URL}/api`, // example: https://toss-backend-g6ab.onrender.com/api
+  timeout: 15000, // 15s timeout for slow networks
 });
 
-// ✅ Automatically attach token with every request
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
-});
+/* -------------------------------------------------------------------
+ 🔐 ATTACH TOKEN WITH EVERY REQUEST
+------------------------------------------------------------------- */
 
-// ✅ Handle API errors gracefully
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("userToken"); // ✅ consistent key (same as login)
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/* -------------------------------------------------------------------
+ ⚠️ GLOBAL ERROR HANDLING
+------------------------------------------------------------------- */
+
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    // optional: handle token expiration globally
+    // Handle unauthorized or expired token globally
     if (error.response?.status === 401) {
-      console.warn("Session expired or unauthorized");
+      console.warn("Session expired or unauthorized user 🚫");
+      localStorage.removeItem("userToken");
+      localStorage.removeItem("userData");
+      // Optional: auto-redirect to login
+      // window.location.href = "/login";
     }
+
+    // Log meaningful message for debugging
+    console.error(
+      "❌ API Error:",
+      error.response?.data?.message || error.message
+    );
+
     return Promise.reject(error);
   }
 );
 
 /* -------------------------------------------------------------------
- 🧩 BET SERVICES
+ 🧩 BET SERVICES (Reusable Across Components)
 ------------------------------------------------------------------- */
 
 // 🎯 Place a new bet
@@ -51,3 +78,8 @@ export const getAllBets = async (query = "") => {
   const res = await API.get(`/bets${query}`);
   return res.data;
 };
+
+/* -------------------------------------------------------------------
+ 📦 EXPORT DEFAULT INSTANCE (for direct API calls)
+------------------------------------------------------------------- */
+export default API;

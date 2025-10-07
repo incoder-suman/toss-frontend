@@ -7,19 +7,25 @@ import Wallet from "./pages/Wallet";
 import Rules from "./pages/Rules";
 import Login from "./pages/Login";
 import { CurrencyProvider } from "./context/CurrencyContext";
+import ProtectedRoute from "./components/ProtectedRoute"; // ✅ import
 
 export default function App() {
   return (
     <CurrencyProvider>
       <BrowserRouter>
         <Routes>
+          {/* Public Route */}
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<UserLayout />}>
-            <Route index element={<Home />} />
-            <Route path="bets" element={<Bets />} />
-            <Route path="history" element={<TossHistory />} />
-            <Route path="wallet" element={<Wallet />} />
-            <Route path="rules" element={<Rules />} />
+
+          {/* Protected Routes */}
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<UserLayout />}>
+              <Route index element={<Home />} />
+              <Route path="bets" element={<Bets />} />
+              <Route path="history" element={<TossHistory />} />
+              <Route path="wallet" element={<Wallet />} />
+              <Route path="rules" element={<Rules />} />
+            </Route>
           </Route>
         </Routes>
       </BrowserRouter>
