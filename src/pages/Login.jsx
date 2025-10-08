@@ -42,7 +42,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 p-4">
       <div className="bg-white shadow-lg rounded-2xl w-full max-w-md p-6 sm:p-8 transition-transform duration-300 hover:scale-[1.01]">
         <h1 className="text-3xl font-extrabold text-center text-blue-600 mb-6">
-          Admin Login
+          User Login
         </h1>
 
         {error && (
@@ -55,14 +55,14 @@ export default function Login() {
           {/* Email Input */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
+              User ID
             </label>
             <input
               type="email"
               name="email"
               value={form.email}
               onChange={handleChange}
-              placeholder="Enter your email"
+              placeholder="Enter your User ID"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
@@ -95,7 +95,7 @@ export default function Login() {
         </form>
 
         <p className="text-xs text-gray-500 text-center mt-6">
-          © {new Date().getFullYear()} TOSSBOOK — Secure Admin Portal
+          © {new Date().getFullYear()} TOSSBOOK — Secure User Portal
         </p>
       </div>
     </div>
