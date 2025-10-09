@@ -1,10 +1,9 @@
-// src/pages/Login.jsx
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios"; // ✅ use your axios instance (Render backend connected)
+import api from "../api/axios"; // ✅ Render-connected axios instance
 
 export default function Login() {
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({ userId: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -22,17 +21,24 @@ export default function Login() {
     setError("");
 
     try {
-      const res = await api.post("/auth/login", form); // automatically uses env baseURL
+      // ⚙️ send both email/name as `identifier` to backend
+      const res = await api.post("/auth/login", {
+        identifier: form.userId.trim(), // can be email or username
+        password: form.password.trim(),
+      });
 
-      // ✅ Save token + user to localStorage
+      // ✅ Save token + user
       localStorage.setItem("userToken", res.data.token);
       localStorage.setItem("userData", JSON.stringify(res.data.user));
 
-      // ✅ Redirect to dashboard or homepage
+      // ✅ Redirect to home
       navigate("/");
     } catch (err) {
       console.error("❌ Login error:", err.response?.data || err.message);
-      setError(err.response?.data?.message || "Login failed. Please try again.");
+      setError(
+        err.response?.data?.message ||
+          "Invalid credentials. Please try again."
+      );
     } finally {
       setLoading(false);
     }
@@ -52,17 +58,17 @@ export default function Login() {
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
-          {/* Email Input */}
+          {/* User ID Input (can be name or email) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              User ID
+              User ID or Email
             </label>
             <input
-              type="email"
-              name="email"
-              value={form.email}
+              type="text"
+              name="userId"
+              value={form.userId}
               onChange={handleChange}
-              placeholder="Enter your User ID"
+              placeholder="Enter your User ID or Email"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
