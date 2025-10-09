@@ -1,3 +1,4 @@
+// src/components/Sidebar.jsx
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -17,12 +18,14 @@ export default function Sidebar({ onNavigate }) {
   const { currency, toggleCurrency } = useCurrency();
   const [walletBalance, setWalletBalance] = useState(0);
   const [expBalance, setExpBalance] = useState(0);
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(
+    JSON.parse(localStorage.getItem("userData") || "null")
+  );
   const token = localStorage.getItem("userToken");
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ Fetch logged-in user info
+  // ✅ Fetch logged-in user info (if /auth/me exists)
   useEffect(() => {
     if (!token) return;
     const fetchUser = async () => {
@@ -31,14 +34,15 @@ export default function Sidebar({ onNavigate }) {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(res.data.user);
+        localStorage.setItem("userData", JSON.stringify(res.data.user));
       } catch (err) {
-        console.error("❌ Error fetching user:", err);
+        console.warn("⚠️ /auth/me not found — using local userData");
       }
     };
     fetchUser();
   }, [token]);
 
-  // ✅ Fetch wallet balance
+  // ✅ Wallet fetch + live listener
   useEffect(() => {
     if (!token) return;
 
@@ -57,8 +61,21 @@ export default function Sidebar({ onNavigate }) {
     };
 
     fetchWallet();
-    const interval = setInterval(fetchWallet, 15000);
-    return () => clearInterval(interval);
+
+    // 🔁 Listen to wallet update events (cross-component live)
+    const bc = new BroadcastChannel("wallet_channel");
+    bc.onmessage = (event) => {
+      if (event.data === "update_wallet") {
+        fetchWallet();
+      }
+    };
+
+    const interval = setInterval(fetchWallet, 15000); // auto-refresh fallback
+
+    return () => {
+      bc.close();
+      clearInterval(interval);
+    };
   }, [token]);
 
   // 💱 Currency conversion
@@ -81,11 +98,13 @@ export default function Sidebar({ onNavigate }) {
     { to: "/wallet", label: "Deposit / Withdraw", icon: <Wallet size={18} /> },
   ];
 
-  // ✅ Logout handler
+  // ✅ Logout handler (proper keys removed)
   const handleLogout = () => {
     localStorage.removeItem("userToken");
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    localStorage.removeItem("userData");
+    const bc = new BroadcastChannel("wallet_channel");
+    bc.postMessage("update_wallet");
+    bc.close();
     navigate("/login");
   };
 
@@ -99,7 +118,7 @@ export default function Sidebar({ onNavigate }) {
           className="w-20 h-20 rounded-full border-4 border-white shadow-md"
         />
         <h2 className="mt-3 font-bold text-lg text-center">
-         Friends Toss Book
+          {user?.name ? user.name : "Friends Toss Book"}
         </h2>
         <p className="text-sm opacity-80">
           {user?.name ? `@${user.name}` : "@User"}
