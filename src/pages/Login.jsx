@@ -1,43 +1,40 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api/axios"; // ✅ Render-connected axios instance
+import api from "../api/axios"; // ✅ Axios instance
 
 export default function Login() {
-  const [form, setForm] = useState({ userId: "", password: "" });
+  const [form, setForm] = useState({ identifier: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // ✅ handle input changes
+  // ✅ Input change
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ✅ handle login
+  // ✅ Handle Login
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      // ⚙️ send both email/name as `identifier` to backend
       const res = await api.post("/auth/login", {
-        identifier: form.userId.trim(), // can be email or username
-        password: form.password.trim(),
+        identifier: form.identifier,
+        password: form.password,
       });
 
-      // ✅ Save token + user
+      // ✅ Save user data + token
       localStorage.setItem("userToken", res.data.token);
       localStorage.setItem("userData", JSON.stringify(res.data.user));
 
-      // ✅ Redirect to home
-      navigate("/");
+      navigate("/"); // redirect to home/dashboard
     } catch (err) {
       console.error("❌ Login error:", err.response?.data || err.message);
       setError(
-        err.response?.data?.message ||
-          "Invalid credentials. Please try again."
+        err.response?.data?.message || "Login failed. Please try again."
       );
     } finally {
       setLoading(false);
@@ -58,15 +55,15 @@ export default function Login() {
         )}
 
         <form onSubmit={handleLogin} className="space-y-4">
-          {/* User ID Input (can be name or email) */}
+          {/* Username or Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               User ID or Email
             </label>
             <input
               type="text"
-              name="userId"
-              value={form.userId}
+              name="identifier"
+              value={form.identifier}
               onChange={handleChange}
               placeholder="Enter your User ID or Email"
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -74,7 +71,7 @@ export default function Login() {
             />
           </div>
 
-          {/* Password Input */}
+          {/* Password */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Password
@@ -90,7 +87,7 @@ export default function Login() {
             />
           </div>
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
