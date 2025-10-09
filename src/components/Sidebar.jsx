@@ -11,16 +11,33 @@ import {
   IndianRupee,
 } from "lucide-react";
 import { useCurrency } from "../context/CurrencyContext";
-import api from "../api/axios"; // ✅ global axios instance (Render backend connected)
+import api from "../api/axios";
 
 export default function Sidebar({ onNavigate }) {
   const { currency, toggleCurrency } = useCurrency();
   const [walletBalance, setWalletBalance] = useState(0);
   const [expBalance, setExpBalance] = useState(0);
-  const token = localStorage.getItem("userToken"); // ✅ consistent key
+  const [user, setUser] = useState(null);
+  const token = localStorage.getItem("userToken");
   const location = useLocation();
 
-  // ✅ Fetch wallet balance (with retry + cleanup)
+  // ✅ Fetch logged-in user info
+  useEffect(() => {
+    if (!token) return;
+    const fetchUser = async () => {
+      try {
+        const res = await api.get("/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data.user);
+      } catch (err) {
+        console.error("❌ Error fetching user:", err);
+      }
+    };
+    fetchUser();
+  }, [token]);
+
+  // ✅ Fetch wallet balance (auto-refresh)
   useEffect(() => {
     if (!token) return;
 
@@ -38,9 +55,9 @@ export default function Sidebar({ onNavigate }) {
       }
     };
 
-    fetchWallet(); // initial fetch
-    const interval = setInterval(fetchWallet, 15000); // refresh every 15s
-    return () => clearInterval(interval); // cleanup
+    fetchWallet(); // initial
+    const interval = setInterval(fetchWallet, 15000);
+    return () => clearInterval(interval);
   }, [token]);
 
   // 💱 Currency conversion
@@ -54,7 +71,7 @@ export default function Sidebar({ onNavigate }) {
       ? (expBalance / usdRate).toFixed(2)
       : expBalance.toFixed(2);
 
-  // ✅ Navigation items
+  // ✅ Sidebar navigation items
   const links = [
     { to: "/", label: "Home", icon: <Home size={18} /> },
     { to: "/bets", label: "Bets", icon: <Book size={18} /> },
@@ -69,12 +86,16 @@ export default function Sidebar({ onNavigate }) {
       {/* 👤 Profile Section */}
       <div className="flex flex-col items-center mb-6">
         <img
-          src="https://i.pravatar.cc/100"
+          src={user?.avatar || "https://i.pravatar.cc/100"}
           alt="user"
           className="w-20 h-20 rounded-full border-4 border-white shadow-md"
         />
-        <h2 className="mt-3 font-bold text-lg text-center">Friends Toss Book</h2>
-        <p className="text-sm opacity-80">@User</p>
+        <h2 className="mt-3 font-bold text-lg text-center">
+          {user?.name || "Friends Toss Book"}
+        </h2>
+        <p className="text-sm opacity-80">
+          {user?.username ? `@${user.username}` : user?.name ? `@${user.name}` : "@User"}
+        </p>
       </div>
 
       {/* 💰 Wallet Info */}
