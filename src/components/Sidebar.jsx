@@ -99,7 +99,7 @@ export default function Sidebar({ onNavigate }) {
           className="w-20 h-20 rounded-full border-4 border-white shadow-md"
         />
         <h2 className="mt-3 font-bold text-lg text-center">
-          {user?.name || "Friends Toss Book"}
+         Friends Toss Book
         </h2>
         <p className="text-sm opacity-80">
           {user?.name ? `@${user.name}` : "@User"}
