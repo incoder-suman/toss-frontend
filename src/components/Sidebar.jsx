@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Book,
@@ -20,6 +20,7 @@ export default function Sidebar({ onNavigate }) {
   const [user, setUser] = useState(null);
   const token = localStorage.getItem("userToken");
   const location = useLocation();
+  const navigate = useNavigate();
 
   // ✅ Fetch logged-in user info
   useEffect(() => {
@@ -37,7 +38,7 @@ export default function Sidebar({ onNavigate }) {
     fetchUser();
   }, [token]);
 
-  // ✅ Fetch wallet balance (auto-refresh)
+  // ✅ Fetch wallet balance
   useEffect(() => {
     if (!token) return;
 
@@ -71,7 +72,7 @@ export default function Sidebar({ onNavigate }) {
       ? (expBalance / usdRate).toFixed(2)
       : expBalance.toFixed(2);
 
-  // ✅ Sidebar navigation items (D/W History removed)
+  // ✅ Navigation links (removed D/W History)
   const links = [
     { to: "/", label: "Home", icon: <Home size={18} /> },
     { to: "/bets", label: "Bets", icon: <Book size={18} /> },
@@ -79,6 +80,14 @@ export default function Sidebar({ onNavigate }) {
     { to: "/rules", label: "Rules", icon: <Settings size={18} /> },
     { to: "/wallet", label: "Deposit / Withdraw", icon: <Wallet size={18} /> },
   ];
+
+  // ✅ Logout handler
+  const handleLogout = () => {
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/login");
+  };
 
   return (
     <aside className="h-full flex flex-col bg-cyan-600 text-white p-4 sm:p-5 overflow-y-auto min-w-[230px] sm:min-w-[250px]">
@@ -93,7 +102,7 @@ export default function Sidebar({ onNavigate }) {
           {user?.name || "Friends Toss Book"}
         </h2>
         <p className="text-sm opacity-80">
-          {user?.username ? `@${user.username}` : user?.name ? `@${user.name}` : "@User"}
+          {user?.name ? `@${user.name}` : "@User"}
         </p>
       </div>
 
@@ -145,13 +154,12 @@ export default function Sidebar({ onNavigate }) {
       </button>
 
       {/* 🚪 Logout */}
-      <Link
-        to="/logout"
-        onClick={onNavigate}
+      <button
+        onClick={handleLogout}
         className="mt-6 flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-600 hover:bg-red-700 transition-all text-sm sm:text-base"
       >
         <LogOut size={18} /> Log out
-      </Link>
+      </button>
     </aside>
   );
 }
