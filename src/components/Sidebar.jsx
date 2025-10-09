@@ -55,7 +55,7 @@ export default function Sidebar({ onNavigate }) {
       }
     };
 
-    fetchWallet(); // initial
+    fetchWallet();
     const interval = setInterval(fetchWallet, 15000);
     return () => clearInterval(interval);
   }, [token]);
@@ -71,12 +71,11 @@ export default function Sidebar({ onNavigate }) {
       ? (expBalance / usdRate).toFixed(2)
       : expBalance.toFixed(2);
 
-  // ✅ Sidebar navigation items
+  // ✅ Sidebar navigation items (D/W History removed)
   const links = [
     { to: "/", label: "Home", icon: <Home size={18} /> },
     { to: "/bets", label: "Bets", icon: <Book size={18} /> },
     { to: "/history", label: "Toss History", icon: <History size={18} /> },
-    { to: "/dw", label: "D / W History", icon: <Wallet size={18} /> },
     { to: "/rules", label: "Rules", icon: <Settings size={18} /> },
     { to: "/wallet", label: "Deposit / Withdraw", icon: <Wallet size={18} /> },
   ];
