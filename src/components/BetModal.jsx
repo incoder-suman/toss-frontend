@@ -73,7 +73,7 @@ export default function BetModal({ match, team, onClose, onSuccess }) {
         <div className="flex justify-between items-center mb-6 text-sm sm:text-base">
           <span className="text-gray-600">Potential Win:</span>
           <span className="font-semibold text-green-600">
-            ₹{amount ? (amount * 1.9).toFixed(2) : 0}
+            ₹{amount ? (amount * 1.98).toFixed(2) : 0}
           </span>
         </div>
 
@@ -96,7 +96,7 @@ export default function BetModal({ match, team, onClose, onSuccess }) {
 
         {/* Footer info */}
         <p className="text-xs text-gray-400 text-center mt-4">
-          Note: Winning ratio is <span className="font-semibold text-green-500">1.9x</span>
+          Note: Winning ratio is <span className="font-semibold text-green-500">1.98x</span>
         </p>
       </div>
     </div>
