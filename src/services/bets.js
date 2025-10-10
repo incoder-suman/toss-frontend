@@ -5,9 +5,8 @@ import axios from "axios";
 ------------------------------------------------------------------- */
 
 const API = axios.create({
-  // ✅ Use environment variable from .env file
-  baseURL: `${import.meta.env.VITE_API_URL}/api`, // example: https://toss-backend-g6ab.onrender.com/api
-  timeout: 15000, // 15s timeout for slow networks
+  baseURL: `${import.meta.env.VITE_API_URL || "http://localhost:5000"}/api`,
+  timeout: 15000,
 });
 
 /* -------------------------------------------------------------------
@@ -16,9 +15,11 @@ const API = axios.create({
 
 API.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("userToken"); // ✅ consistent key (same as login)
+    const token = localStorage.getItem("userToken"); // ✅ must match login key
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      console.warn("No token found in localStorage");
     }
     return config;
   },
@@ -32,16 +33,13 @@ API.interceptors.request.use(
 API.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle unauthorized or expired token globally
     if (error.response?.status === 401) {
       console.warn("Session expired or unauthorized user 🚫");
       localStorage.removeItem("userToken");
       localStorage.removeItem("userData");
-      // Optional: auto-redirect to login
-      // window.location.href = "/login";
+      // window.location.href = "/login"; // uncomment for auto-redirect
     }
 
-    // Log meaningful message for debugging
     console.error(
       "❌ API Error:",
       error.response?.data?.message || error.message
@@ -69,7 +67,8 @@ export const getMyBets = async () => {
 
 // 🕹️ Get completed tosses (user’s toss history)
 export const getTossHistory = async () => {
-  const res = await API.get("/bets/history");
+  const res = await API.get("/bets/history"); // check backend route
+  console.log("Fetched Toss History:", res.data);
   return res.data;
 };
 
