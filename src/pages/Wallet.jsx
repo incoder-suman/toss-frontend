@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Wallet as WalletIcon, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import {
+  Wallet as WalletIcon,
+  ArrowDownCircle,
+  ArrowUpCircle,
+} from "lucide-react";
 import api from "../api/axios";
 
 export default function Wallet() {
@@ -71,40 +75,39 @@ export default function Wallet() {
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {transactions.map((txn, i) => (
-              <div
-                key={i}
-                className="flex justify-between items-center px-4 py-3 text-sm sm:text-base"
-              >
-                <div className="flex items-center gap-2">
-                  {txn.type === "DEPOSIT" ? (
-                    <ArrowDownCircle className="w-5 h-5 text-green-600" />
-                  ) : (
-                    <ArrowUpCircle className="w-5 h-5 text-red-500" />
-                  )}
-                  <div>
-                    <p className="font-semibold">
-                      {txn.type === "DEPOSIT"
-                        ? "Token Added"
-                        : "Token Deducted"}
-                    </p>
-                    <p className="text-gray-500 text-xs sm:text-sm">
-                      {new Date(txn.createdAt).toLocaleString()}
-                    </p>
+            {transactions.map((txn, i) => {
+              const isDeposit = txn.amount > 0; // ✅ Based on actual amount sign
+
+              return (
+                <div
+                  key={i}
+                  className="flex justify-between items-center px-4 py-3 text-sm sm:text-base"
+                >
+                  <div className="flex items-center gap-2">
+                    {isDeposit ? (
+                      <ArrowDownCircle className="w-5 h-5 text-green-600" />
+                    ) : (
+                      <ArrowUpCircle className="w-5 h-5 text-red-500" />
+                    )}
+                    <div>
+                      <p className="font-semibold">
+                        {isDeposit ? "Token Added" : "Token Deducted"}
+                      </p>
+                      <p className="text-gray-500 text-xs sm:text-sm">
+                        {new Date(txn.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div
+                    className={`font-bold ${
+                      isDeposit ? "text-green-600" : "text-red-500"
+                    }`}
+                  >
+                    {isDeposit ? "+" : "-"} ₹{Math.abs(txn.amount || 0)}
                   </div>
                 </div>
-                <div
-                  className={`font-bold ${
-                    txn.type === "DEPOSIT"
-                      ? "text-green-600"
-                      : "text-red-500"
-                  }`}
-                >
-                  {txn.type === "DEPOSIT" ? "+" : "-"} ₹
-                  {Math.abs(txn.amount || 0)}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
