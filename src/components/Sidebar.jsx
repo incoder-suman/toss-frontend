@@ -1,4 +1,3 @@
-// src/components/Sidebar.jsx
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -21,13 +20,17 @@ export default function Sidebar({ onNavigate }) {
   const [user, setUser] = useState(
     JSON.parse(localStorage.getItem("userData") || "null")
   );
+
   const token = localStorage.getItem("userToken");
   const location = useLocation();
   const navigate = useNavigate();
 
-  // ✅ Fetch logged-in user info (if /auth/me exists)
+  /* ---------------------------------------------------------
+   🧑 Fetch user info if /auth/me exists
+  --------------------------------------------------------- */
   useEffect(() => {
     if (!token) return;
+
     const fetchUser = async () => {
       try {
         const res = await api.get("/auth/me", {
@@ -35,14 +38,16 @@ export default function Sidebar({ onNavigate }) {
         });
         setUser(res.data.user);
         localStorage.setItem("userData", JSON.stringify(res.data.user));
-      } catch (err) {
-        console.warn("⚠️ /auth/me not found — using local userData");
+      } catch {
+        console.warn("⚠️ No /auth/me route found — fallback to local data");
       }
     };
     fetchUser();
   }, [token]);
 
-  // ✅ Wallet fetch + live listener
+  /* ---------------------------------------------------------
+   💰 Wallet auto-fetch + live update
+  --------------------------------------------------------- */
   useEffect(() => {
     if (!token) return;
 
@@ -62,15 +67,14 @@ export default function Sidebar({ onNavigate }) {
 
     fetchWallet();
 
-    // 🔁 Listen to wallet update events (cross-component live)
+    // 🔁 Live updates from BroadcastChannel
     const bc = new BroadcastChannel("wallet_channel");
     bc.onmessage = (event) => {
-      if (event.data === "update_wallet") {
-        fetchWallet();
-      }
+      if (event.data === "update_wallet") fetchWallet();
     };
 
-    const interval = setInterval(fetchWallet, 15000); // auto-refresh fallback
+    // ⏱️ Auto-refresh every 15s
+    const interval = setInterval(fetchWallet, 15000);
 
     return () => {
       bc.close();
@@ -78,7 +82,9 @@ export default function Sidebar({ onNavigate }) {
     };
   }, [token]);
 
-  // 💱 Currency conversion
+  /* ---------------------------------------------------------
+   💱 Currency Conversion
+  --------------------------------------------------------- */
   const usdRate = 83;
   const convertedBalance =
     currency === "USD"
@@ -89,7 +95,9 @@ export default function Sidebar({ onNavigate }) {
       ? (expBalance / usdRate).toFixed(2)
       : expBalance.toFixed(2);
 
-  // ✅ Navigation links (removed D/W History)
+  /* ---------------------------------------------------------
+   📋 Navigation Links
+  --------------------------------------------------------- */
   const links = [
     { to: "/", label: "Home", icon: <Home size={18} /> },
     { to: "/bets", label: "Bets", icon: <Book size={18} /> },
@@ -98,16 +106,18 @@ export default function Sidebar({ onNavigate }) {
     { to: "/wallet", label: "Deposit / Withdraw", icon: <Wallet size={18} /> },
   ];
 
-  // ✅ Logout handler (proper keys removed)
+  /* ---------------------------------------------------------
+   🚪 Logout
+  --------------------------------------------------------- */
   const handleLogout = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("userData");
-    const bc = new BroadcastChannel("wallet_channel");
-    bc.postMessage("update_wallet");
-    bc.close();
     navigate("/login");
   };
 
+  /* ---------------------------------------------------------
+   🖼️ Render UI
+  --------------------------------------------------------- */
   return (
     <aside className="h-full flex flex-col bg-cyan-600 text-white p-4 sm:p-5 overflow-y-auto min-w-[230px] sm:min-w-[250px]">
       {/* 👤 Profile Section */}
@@ -118,7 +128,7 @@ export default function Sidebar({ onNavigate }) {
           className="w-20 h-20 rounded-full border-4 border-white shadow-md"
         />
         <h2 className="mt-3 font-bold text-lg text-center">
-          {user?.name ? user.name : "Friends Toss Book"}
+          {user?.name || "Friends Toss Book"}
         </h2>
         <p className="text-sm opacity-80">
           {user?.name ? `@${user.name}` : "@User"}
