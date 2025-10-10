@@ -116,12 +116,12 @@ export default function Sidebar({ onNavigate }) {
   };
 
   /* ---------------------------------------------------------
-   🖼️ Render UI
+   🖼️ Render UI (with sticky footer)
   --------------------------------------------------------- */
   return (
-    <aside className="h-full flex flex-col bg-cyan-600 text-white p-4 sm:p-5 overflow-y-auto min-w-[230px] sm:min-w-[250px]">
+    <aside className="h-full flex flex-col bg-cyan-600 text-white sm:p-5 p-4 min-w-[230px] sm:min-w-[250px]">
       {/* 👤 Profile Section */}
-      <div className="flex flex-col items-center mb-6">
+      <div className="flex flex-col items-center mb-5">
         <img
           src={user?.avatar || "https://i.pravatar.cc/100"}
           alt="user"
@@ -136,7 +136,7 @@ export default function Sidebar({ onNavigate }) {
       </div>
 
       {/* 💰 Wallet Info */}
-      <div className="flex justify-between items-center text-sm mb-5 px-3 py-2 rounded-lg bg-cyan-700 shadow-inner">
+      <div className="flex justify-between items-center text-sm mb-4 px-3 py-2 rounded-lg bg-cyan-700 shadow-inner">
         <div>
           BAL: {currency === "INR" ? "₹" : "$"}
           {convertedBalance}
@@ -147,8 +147,8 @@ export default function Sidebar({ onNavigate }) {
         </div>
       </div>
 
-      {/* 🧭 Navigation Links */}
-      <nav className="flex-1 space-y-2">
+      {/* 🧭 Scrollable Links Area */}
+      <nav className="flex-1 overflow-y-auto space-y-2 pb-4">
         {links.map((item) => (
           <Link
             key={item.to}
@@ -166,29 +166,32 @@ export default function Sidebar({ onNavigate }) {
         ))}
       </nav>
 
-      {/* 💱 Currency Switch */}
-      <button
-        onClick={toggleCurrency}
-        className="mt-5 flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-cyan-700 hover:bg-cyan-800 transition-all text-sm sm:text-base"
-      >
-        {currency === "INR" ? (
-          <>
-            <IndianRupee size={18} /> INR
-          </>
-        ) : (
-          <>
-            <DollarSign size={18} /> USD
-          </>
-        )}
-      </button>
+      {/* 📍 Sticky Footer Buttons */}
+      <div className="sticky bottom-0 bg-cyan-600 pt-3 pb-2 mt-2 border-t border-cyan-700">
+        {/* 💱 Currency Switch */}
+        <button
+          onClick={toggleCurrency}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-cyan-700 hover:bg-cyan-800 transition-all text-sm sm:text-base mb-2"
+        >
+          {currency === "INR" ? (
+            <>
+              <IndianRupee size={18} /> INR
+            </>
+          ) : (
+            <>
+              <DollarSign size={18} /> USD
+            </>
+          )}
+        </button>
 
-      {/* 🚪 Logout */}
-      <button
-        onClick={handleLogout}
-        className="mt-6 flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-600 hover:bg-red-700 transition-all text-sm sm:text-base"
-      >
-        <LogOut size={18} /> Log out
-      </button>
+        {/* 🚪 Logout */}
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-600 hover:bg-red-700 transition-all text-sm sm:text-base"
+        >
+          <LogOut size={18} /> Log out
+        </button>
+      </div>
     </aside>
   );
 }
