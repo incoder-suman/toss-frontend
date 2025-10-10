@@ -67,13 +67,11 @@ export default function Sidebar({ onNavigate }) {
 
     fetchWallet();
 
-    // 🔁 Live updates from BroadcastChannel
     const bc = new BroadcastChannel("wallet_channel");
     bc.onmessage = (event) => {
       if (event.data === "update_wallet") fetchWallet();
     };
 
-    // ⏱️ Auto-refresh every 15s
     const interval = setInterval(fetchWallet, 15000);
 
     return () => {
@@ -96,14 +94,26 @@ export default function Sidebar({ onNavigate }) {
       : expBalance.toFixed(2);
 
   /* ---------------------------------------------------------
-   📋 Navigation Links
+   🧭 Navigation Links
   --------------------------------------------------------- */
   const links = [
     { to: "/", label: "Home", icon: <Home size={18} /> },
     { to: "/bets", label: "Bets", icon: <Book size={18} /> },
     { to: "/history", label: "Toss History", icon: <History size={18} /> },
     { to: "/rules", label: "Rules", icon: <Settings size={18} /> },
-    { to: "/wallet", label: "Deposit / Withdraw", icon: <Wallet size={18} /> },
+    // ✅ Wallet redirect to WhatsApp instead of route navigation
+    {
+      to: null,
+      label: "Deposit / Withdraw",
+      icon: <Wallet size={18} />,
+      action: () => {
+        const phoneNumber = "918449060585";
+        const message = "Hello! I want to know more about deposit/withdrawal.";
+        window.location.href = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
+          message
+        )}`;
+      },
+    },
   ];
 
   /* ---------------------------------------------------------
@@ -116,7 +126,7 @@ export default function Sidebar({ onNavigate }) {
   };
 
   /* ---------------------------------------------------------
-   🖼️ Render UI (with sticky footer)
+   🖼️ Render UI
   --------------------------------------------------------- */
   return (
     <aside className="h-full flex flex-col bg-cyan-600 text-white sm:p-5 p-4 min-w-[230px] sm:min-w-[250px]">
@@ -147,28 +157,38 @@ export default function Sidebar({ onNavigate }) {
         </div>
       </div>
 
-      {/* 🧭 Scrollable Links Area */}
+      {/* 🧭 Links */}
       <nav className="flex-1 overflow-y-auto space-y-2 pb-4">
-        {links.map((item) => (
-          <Link
-            key={item.to}
-            to={item.to}
-            onClick={onNavigate}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${
-              location.pathname === item.to
-                ? "bg-cyan-800 font-semibold shadow-sm"
-                : "hover:bg-cyan-700"
-            }`}
-          >
-            {item.icon}
-            <span className="text-sm sm:text-base">{item.label}</span>
-          </Link>
-        ))}
+        {links.map((item) =>
+          item.to ? (
+            <Link
+              key={item.label}
+              to={item.to}
+              onClick={onNavigate}
+              className={`flex items-center gap-2 px-3 py-2 rounded-md transition-all ${
+                location.pathname === item.to
+                  ? "bg-cyan-800 font-semibold shadow-sm"
+                  : "hover:bg-cyan-700"
+              }`}
+            >
+              {item.icon}
+              <span className="text-sm sm:text-base">{item.label}</span>
+            </Link>
+          ) : (
+            <button
+              key={item.label}
+              onClick={item.action}
+              className="flex items-center gap-2 w-full text-left px-3 py-2 rounded-md hover:bg-green-700 transition-all bg-green-600 font-semibold"
+            >
+              {item.icon}
+              <span className="text-sm sm:text-base">{item.label}</span>
+            </button>
+          )
+        )}
       </nav>
 
-      {/* 📍 Sticky Footer Buttons */}
+      {/* 📍 Footer */}
       <div className="sticky bottom-0 bg-cyan-600 pt-3 pb-2 mt-2 border-t border-cyan-700">
-        {/* 💱 Currency Switch */}
         <button
           onClick={toggleCurrency}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-cyan-700 hover:bg-cyan-800 transition-all text-sm sm:text-base mb-2"
@@ -184,7 +204,6 @@ export default function Sidebar({ onNavigate }) {
           )}
         </button>
 
-        {/* 🚪 Logout */}
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-600 hover:bg-red-700 transition-all text-sm sm:text-base"
