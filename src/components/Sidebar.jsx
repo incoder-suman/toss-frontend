@@ -15,8 +15,8 @@ import api from "../api/axios";
 
 export default function Sidebar({ onNavigate }) {
   const { currency, toggleCurrency } = useCurrency();
-  const [walletBalance, setWalletBalance] = useState(0); // 💰 total wallet
-  const [expBalance, setExpBalance] = useState(0); // 🎯 exposure (active bets)
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [expBalance, setExpBalance] = useState(0);
   const [user, setUser] = useState(
     JSON.parse(localStorage.getItem("userData") || "null")
   );
@@ -60,19 +60,20 @@ export default function Sidebar({ onNavigate }) {
         setWalletBalance(data.walletBalance || 0);
         setExpBalance(data.exposure || 0);
       } catch (err) {
-        console.error("❌ Wallet fetch error:", err.response?.data || err.message);
+        console.error(
+          "❌ Wallet fetch error:",
+          err.response?.data || err.message
+        );
       }
     };
 
     fetchWallet();
 
-    // 🔁 Realtime Broadcast (on result declared / bet placed)
     const bc = new BroadcastChannel("wallet_channel");
     bc.onmessage = (msg) => {
       if (msg.data === "update_wallet") fetchWallet();
     };
 
-    // ⏱ Auto-refresh every 15s
     const interval = setInterval(fetchWallet, 15000);
 
     return () => {
@@ -94,7 +95,7 @@ export default function Sidebar({ onNavigate }) {
   const links = [
     { to: "/", label: "Home", icon: <Home size={18} /> },
     { to: "/bets", label: "Bets", icon: <Book size={18} /> },
-    { to: "/history", label: "Toss History", icon: <History size={18} /> },
+    { to: "/history", label: "Wallet History", icon: <History size={18} /> },
     { to: "/rules", label: "Rules", icon: <Settings size={18} /> },
     { to: "/wallet", label: "Deposit / Withdraw", icon: <Wallet size={18} /> },
   ];
@@ -109,6 +110,18 @@ export default function Sidebar({ onNavigate }) {
   };
 
   /* ---------------------------------------------------------
+   💬 WhatsApp Redirect
+  --------------------------------------------------------- */
+  const handleWhatsAppRedirect = () => {
+    const phoneNumber = "918449060585"; // ✅ Your WhatsApp number
+    const message = "Hello! I need help regarding my wallet or account.";
+    window.open(
+      `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`,
+      "_blank"
+    );
+  };
+
+  /* ---------------------------------------------------------
    🖼 UI Rendering
   --------------------------------------------------------- */
   return (
@@ -116,10 +129,10 @@ export default function Sidebar({ onNavigate }) {
       {/* 👤 Profile */}
       <div className="flex flex-col items-center mb-5">
         <img
-  src={user?.avatar || "/vite.jpeg"}
-  alt="user"
-  className="w-20 h-20 rounded-full border-4 border-white shadow-md"
-/>
+          src={user?.avatar || "/vite.jpeg"}
+          alt="user"
+          className="w-20 h-20 rounded-full border-4 border-white shadow-md"
+        />
         <h2 className="mt-3 font-bold text-lg text-center">
           {user?.name || "Friends Toss Book"}
         </h2>
@@ -168,6 +181,23 @@ export default function Sidebar({ onNavigate }) {
 
       {/* ⚙️ Footer */}
       <div className="sticky bottom-0 bg-cyan-600 pt-3 pb-2 mt-2 border-t border-cyan-700">
+        {/* 💬 WhatsApp Button */}
+        <button
+          onClick={handleWhatsAppRedirect}
+          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 transition-all text-sm sm:text-base mb-2 font-semibold shadow-md"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 448 512"
+            fill="white"
+            className="w-4 h-4"
+          >
+            <path d="M380.9 97.1C339-2.9 214.6-30.5 123 38.6c-59.6 44.2-87.8 121.6-68.5 197.1L24 480l248.6-64.7c79.5 17.6 162.5-22.9 200.3-96.9 41.9-81.2 14.5-180.8-62-221.3zM220.6 398.2l-66.1 17.2 17.5-64.1C130 312.1 97.1 260.9 97.1 202.4c0-87 70.6-157.6 157.6-157.6 87 0 157.6 70.6 157.6 157.6 0 87-70.6 157.6-157.6 157.6-29.7 0-58.1-8.3-83.1-23.6l-11 4z" />
+          </svg>
+          Chat with Admin
+        </button>
+
+        {/* 💱 Currency Switch */}
         <button
           onClick={toggleCurrency}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-cyan-700 hover:bg-cyan-800 transition-all text-sm sm:text-base mb-2"
@@ -183,6 +213,7 @@ export default function Sidebar({ onNavigate }) {
           )}
         </button>
 
+        {/* 🚪 Logout */}
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-red-600 hover:bg-red-700 transition-all text-sm sm:text-base"
