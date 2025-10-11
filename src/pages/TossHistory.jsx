@@ -1,24 +1,67 @@
 import { useEffect, useState } from "react";
-import { getTossHistory } from "../services/bets";
+import api from "../api/axios";
 
 export default function TossHistory() {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  /* ---------------------------------------------------------
+   🧾 Fetch Toss History (only completed matches)
+  --------------------------------------------------------- */
+  const fetchHistory = async () => {
+    try {
+      const token = localStorage.getItem("userToken");
+      if (!token) return;
+
+      const res = await api.get("/bets/history", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const data = res.data?.bets || res.data || [];
+      setHistory(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("❌ Error fetching toss history:", err.response?.data || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchHistory = async () => {
-      try {
-        const data = await getTossHistory();
-        setHistory(data);
-      } catch (err) {
-        console.error("Error fetching toss history:", err);
-      } finally {
-        setLoading(false);
+    fetchHistory();
+
+    // 🔁 Auto refresh every 20s
+    const interval = setInterval(fetchHistory, 20000);
+
+    // 🛰️ Listen for broadcast updates (result published / wallet change)
+    const bc = new BroadcastChannel("wallet_channel");
+    bc.onmessage = (msg) => {
+      if (msg.data === "refresh_bets" || msg.data === "update_wallet") {
+        fetchHistory();
       }
     };
-    fetchHistory();
+
+    return () => {
+      clearInterval(interval);
+      bc.close();
+    };
   }, []);
 
+  /* ---------------------------------------------------------
+   📊 Stats Calculation
+  --------------------------------------------------------- */
+  const totalWon = history
+    .filter((b) => b.match?.result && b.match.result.toLowerCase() === (b.team || b.side)?.toLowerCase())
+    .reduce((sum, b) => sum + (b.potentialWin || 0), 0);
+
+  const totalLost = history
+    .filter((b) => b.match?.result && b.match.result.toLowerCase() !== (b.team || b.side)?.toLowerCase())
+    .reduce((sum, b) => sum + (b.stake || 0), 0);
+
+  const net = totalWon - totalLost;
+
+  /* ---------------------------------------------------------
+   🕒 Loading & Empty States
+  --------------------------------------------------------- */
   if (loading)
     return (
       <p className="text-center mt-6 text-gray-500 text-sm sm:text-base">
@@ -33,25 +76,17 @@ export default function TossHistory() {
       </p>
     );
 
-  // ✅ Calculate totals
-  const totalWon = history.filter(
-    (b) => b.match?.result === b.side
-  ).reduce((sum, b) => sum + b.potentialWin, 0);
-
-  const totalLost = history.filter(
-    (b) => b.match?.result !== b.side
-  ).reduce((sum, b) => sum + b.stake, 0);
-
-  const net = totalWon - totalLost;
-
+  /* ---------------------------------------------------------
+   🧭 Render Component
+  --------------------------------------------------------- */
   return (
     <div className="p-3 sm:p-6">
       <h1 className="text-xl sm:text-2xl font-bold mb-4 text-center sm:text-left">
         Toss History
       </h1>
 
-      {/* 🧾 Summary Bar */}
-      <div className="flex flex-wrap justify-center sm:justify-start gap-3 mb-4 text-sm sm:text-base">
+      {/* 📊 Summary Bar */}
+      <div className="flex flex-wrap justify-center sm:justify-start gap-3 mb-5 text-sm sm:text-base">
         <div className="bg-green-100 text-green-700 px-3 py-1.5 rounded-lg shadow-sm">
           Total Won: ₹{totalWon.toFixed(2)}
         </div>
@@ -75,15 +110,18 @@ export default function TossHistory() {
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="p-3 text-left">Match</th>
-              <th className="p-3 text-left">Your Side</th>
+              <th className="p-3 text-left">Your Team</th>
               <th className="p-3 text-left">Stake</th>
-              <th className="p-3 text-left">Win/Loss</th>
+              <th className="p-3 text-left">Win / Loss</th>
               <th className="p-3 text-left">Result</th>
             </tr>
           </thead>
           <tbody>
             {history.map((bet) => {
-              const isWin = bet.match?.result === bet.side;
+              const team = bet.team || bet.side;
+              const result = bet.match?.result;
+              const isWin = result && result.toLowerCase() === team?.toLowerCase();
+
               return (
                 <tr
                   key={bet._id}
@@ -93,7 +131,7 @@ export default function TossHistory() {
                     {bet.match?.title || "Match Deleted"}
                   </td>
                   <td className="p-3 text-blue-600 font-semibold whitespace-nowrap">
-                    {bet.side?.toUpperCase()}
+                    {team?.toUpperCase()}
                   </td>
                   <td className="p-3 text-gray-700 whitespace-nowrap">
                     ₹{bet.stake}
@@ -105,10 +143,10 @@ export default function TossHistory() {
                   >
                     {isWin
                       ? `+₹${bet.potentialWin}`
-                      : `-₹${bet.stake.toFixed(2)}`}
+                      : `-₹${(bet.stake || 0).toFixed(2)}`}
                   </td>
                   <td className="p-3 text-gray-700 whitespace-nowrap">
-                    {bet.match?.result?.toUpperCase() || "N/A"}
+                    {result?.toUpperCase() || "N/A"}
                   </td>
                 </tr>
               );
@@ -120,7 +158,10 @@ export default function TossHistory() {
       {/* 📱 Mobile Cards */}
       <div className="sm:hidden space-y-3">
         {history.map((bet) => {
-          const isWin = bet.match?.result === bet.side;
+          const team = bet.team || bet.side;
+          const result = bet.match?.result;
+          const isWin = result && result.toLowerCase() === team?.toLowerCase();
+
           return (
             <div
               key={bet._id}
@@ -132,9 +173,9 @@ export default function TossHistory() {
 
               <div className="text-sm text-gray-600 space-y-1">
                 <p>
-                  <span className="font-medium">Your Side:</span>{" "}
+                  <span className="font-medium">Your Team:</span>{" "}
                   <span className="text-blue-600 font-semibold">
-                    {bet.side?.toUpperCase()}
+                    {team?.toUpperCase()}
                   </span>
                 </p>
                 <p>
@@ -142,7 +183,7 @@ export default function TossHistory() {
                 </p>
                 <p>
                   <span className="font-medium">Result:</span>{" "}
-                  {bet.match?.result?.toUpperCase() || "N/A"}
+                  {result?.toUpperCase() || "N/A"}
                 </p>
                 <p
                   className={`font-semibold ${
