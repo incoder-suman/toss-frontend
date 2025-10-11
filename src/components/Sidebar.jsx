@@ -116,10 +116,10 @@ export default function Sidebar({ onNavigate }) {
       {/* 👤 Profile */}
       <div className="flex flex-col items-center mb-5">
         <img
-          src="/frontend/public/vite.jpeg"
-          alt="user"
-          className="w-20 h-20 rounded-full border-4 border-white shadow-md"
-        />
+  src={user?.avatar || "/vite.jpeg"}
+  alt="user"
+  className="w-20 h-20 rounded-full border-4 border-white shadow-md"
+/>
         <h2 className="mt-3 font-bold text-lg text-center">
           {user?.name || "Friends Toss Book"}
         </h2>
