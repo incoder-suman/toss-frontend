@@ -95,9 +95,9 @@ export default function Sidebar({ onNavigate }) {
   const links = [
     { to: "/", label: "Home", icon: <Home size={18} /> },
     { to: "/bets", label: "Bets", icon: <Book size={18} /> },
-    { to: "/history", label: "Wallet History", icon: <History size={18} /> },
+    { to: "/history", label: "Toss History", icon: <History size={18} /> },
     { to: "/rules", label: "Rules", icon: <Settings size={18} /> },
-    { to: "/wallet", label: "Deposit / Withdraw", icon: <Wallet size={18} /> },
+    { to: "/wallet", label: "Wallet History", icon: <Wallet size={18} /> },
   ];
 
   /* ---------------------------------------------------------
