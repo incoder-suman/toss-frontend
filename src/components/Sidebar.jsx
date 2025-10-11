@@ -116,7 +116,7 @@ export default function Sidebar({ onNavigate }) {
       {/* 👤 Profile */}
       <div className="flex flex-col items-center mb-5">
         <img
-          src={user?.avatar || "https://i.pravatar.cc/100"}
+          src="/vite.png"
           alt="user"
           className="w-20 h-20 rounded-full border-4 border-white shadow-md"
         />
