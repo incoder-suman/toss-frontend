@@ -50,7 +50,7 @@ export default function Wallet() {
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-5">
         <h1 className="text-2xl font-bold text-cyan-700 flex items-center gap-2">
           <WalletIcon className="w-6 h-6 text-cyan-600" />
-          Deposit / Withdraw
+          Wallet History
         </h1>
 
         <button

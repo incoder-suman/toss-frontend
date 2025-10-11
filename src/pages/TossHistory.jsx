@@ -82,7 +82,7 @@ export default function TossHistory() {
   return (
     <div className="p-3 sm:p-6">
       <h1 className="text-xl sm:text-2xl font-bold mb-4 text-center sm:text-left">
-        Wallet History
+        Toss History
       </h1>
 
       {/* 📊 Summary Bar */}
