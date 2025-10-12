@@ -6,7 +6,7 @@ export default function Home() {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedBet, setSelectedBet] = useState(null);
-  const [userBets, setUserBets] = useState([]); // 👈 track user’s placed bets
+  const [userBets, setUserBets] = useState([]);
   const [error, setError] = useState("");
 
   /* ------------------------------------------
@@ -49,17 +49,25 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const upcoming = matches.filter((m) => m.status === "UPCOMING");
-  const live = matches.filter((m) => m.status === "LIVE");
-
   /* ------------------------------------------
-     🕒 Utility: Format date & time
+     ⏱️ Utility: Format Time + Filter Expired
   ------------------------------------------ */
   const formatDateTime = (date) =>
     new Date(date).toLocaleString("en-IN", {
       dateStyle: "medium",
       timeStyle: "short",
     });
+
+  const now = new Date();
+
+  // ❌ Filter only matches whose lastBetTime not passed
+  const activeMatches = matches.filter((m) => {
+    if (!m.lastBetTime) return true; // fallback if not set
+    return new Date(m.lastBetTime) > now;
+  });
+
+  const upcoming = activeMatches.filter((m) => m.status === "UPCOMING");
+  const live = activeMatches.filter((m) => m.status === "LIVE");
 
   /* ------------------------------------------
      🔥 Render
@@ -77,6 +85,7 @@ export default function Home() {
             {live.map((m) => {
               const [teamA, teamB] = (m.title || "").split(/vs/i).map((t) => t.trim());
               const myBet = userBets.find((b) => b.match === m._id);
+              const deadline = new Date(m.lastBetTime);
 
               return (
                 <div
@@ -88,17 +97,15 @@ export default function Home() {
                       {teamA} vs {teamB}
                     </h3>
 
-                    <div className="text-gray-600 text-xs sm:text-sm space-y-1 text-center sm:text-left">
-                      <p>Start Time: {formatDateTime(m.startAt)}</p>
-                      {m.lastBetTime && (
-                        <p className="text-red-500 font-medium">
-                          Last Bet Till: {formatDateTime(m.lastBetTime)}
-                        </p>
-                      )}
-                    </div>
+                    {/* ✅ Show only Last Bet Till */}
+                    {m.lastBetTime && (
+                      <p className="text-sm text-red-500 font-medium text-center sm:text-left">
+                        Last Bet Till: {formatDateTime(m.lastBetTime)}
+                      </p>
+                    )}
                   </div>
 
-                  {/* ✅ If user already placed bet on this match */}
+                  {/* ✅ If user already placed bet */}
                   {myBet ? (
                     <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-3 text-center space-y-2 transition-all hover:shadow-md">
                       <p className="text-sm font-medium text-green-700">
@@ -128,20 +135,28 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    // 🧩 Show “Bet on Team A / Team B” by default
+                    // 🧩 Show bet buttons if not expired
                     <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                      <button
-                        onClick={() => setSelectedBet({ match: m, team: teamA })}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all"
-                      >
-                        Bet on {teamA}
-                      </button>
-                      <button
-                        onClick={() => setSelectedBet({ match: m, team: teamB })}
-                        className="flex-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all"
-                      >
-                        Bet on {teamB}
-                      </button>
+                      {deadline > now ? (
+                        <>
+                          <button
+                            onClick={() => setSelectedBet({ match: m, team: teamA })}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                          >
+                            Bet on {teamA}
+                          </button>
+                          <button
+                            onClick={() => setSelectedBet({ match: m, team: teamB })}
+                            className="flex-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all"
+                          >
+                            Bet on {teamB}
+                          </button>
+                        </>
+                      ) : (
+                        <p className="text-xs text-gray-400 italic text-center">
+                          ⏰ Betting closed
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -160,6 +175,8 @@ export default function Home() {
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {upcoming.map((m) => {
               const [teamA, teamB] = (m.title || "").split(/vs/i).map((t) => t.trim());
+              const deadline = new Date(m.lastBetTime);
+
               return (
                 <div
                   key={m._id}
@@ -168,23 +185,18 @@ export default function Home() {
                   <h3 className="font-semibold text-lg text-gray-800 mb-1 text-center sm:text-left">
                     {teamA} vs {teamB}
                   </h3>
-                  <div className="text-sm text-gray-600 space-y-1 text-center sm:text-left">
-                    <p>
-                      Toss Time:{" "}
-                      <span className="font-medium">{formatDateTime(m.startAt)}</span>
+
+                  {m.lastBetTime && (
+                    <p className="text-sm text-red-500 font-medium text-center sm:text-left">
+                      Last Bet Till: {formatDateTime(m.lastBetTime)}
                     </p>
-                    {m.lastBetTime && (
-                      <p>
-                        Last Bet Till:{" "}
-                        <span className="font-medium text-red-500">
-                          {formatDateTime(m.lastBetTime)}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                  <p className="mt-3 text-xs text-gray-500 italic text-center sm:text-left">
-                    Bets will open soon...
-                  </p>
+                  )}
+
+                  {deadline < now && (
+                    <p className="mt-3 text-xs text-gray-400 italic text-center">
+                      ⏰ Betting closed
+                    </p>
+                  )}
                 </div>
               );
             })}
