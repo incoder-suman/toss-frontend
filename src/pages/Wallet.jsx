@@ -36,7 +36,7 @@ export default function Wallet() {
   ------------------------------------------------------------ */
   const handleWhatsAppRedirect = () => {
     const phoneNumber = "918449060585"; // include country code
-    const message = "Hello! I want to Deposit or Withdraw my tokens.";
+    // const message = "Hello! I want to Deposit or Withdraw my tokens.";
     window.location.href = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
       message
     )}`;
