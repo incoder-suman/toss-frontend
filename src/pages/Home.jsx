@@ -40,17 +40,15 @@ export default function Home() {
   useEffect(() => {
     fetchMatches();
     fetchUserBets();
-
     const interval = setInterval(() => {
       fetchMatches();
       fetchUserBets();
     }, 15000);
-
     return () => clearInterval(interval);
   }, []);
 
   /* ------------------------------------------
-     ⏱️ Utility: Format Time + Filter Expired
+     ⏱️ Format + Filter (hide expired)
   ------------------------------------------ */
   const formatDateTime = (date) =>
     new Date(date).toLocaleString("en-IN", {
@@ -59,18 +57,29 @@ export default function Home() {
     });
 
   const now = new Date();
-
-  // ❌ Filter only matches whose lastBetTime not passed
   const activeMatches = matches.filter((m) => {
-    if (!m.lastBetTime) return true; // fallback if not set
+    if (!m.lastBetTime) return true;
     return new Date(m.lastBetTime) > now;
   });
 
-  const upcoming = activeMatches.filter((m) => m.status === "UPCOMING");
   const live = activeMatches.filter((m) => m.status === "LIVE");
+  const upcoming = activeMatches.filter((m) => m.status === "UPCOMING");
 
   /* ------------------------------------------
-     🔥 Render
+     🧩 Find user's bet for a match (fix)
+  ------------------------------------------ */
+  const getUserBet = (matchId) => {
+    return (
+      userBets.find(
+        (b) =>
+          b.match === matchId || // direct matchId
+          b.match?._id === matchId // or nested match object
+      ) || null
+    );
+  };
+
+  /* ------------------------------------------
+     🧠 Render
   ------------------------------------------ */
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 space-y-10">
@@ -84,7 +93,7 @@ export default function Home() {
           <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
             {live.map((m) => {
               const [teamA, teamB] = (m.title || "").split(/vs/i).map((t) => t.trim());
-              const myBet = userBets.find((b) => b.match === m._id);
+              const myBet = getUserBet(m._id);
               const deadline = new Date(m.lastBetTime);
 
               return (
@@ -97,7 +106,6 @@ export default function Home() {
                       {teamA} vs {teamB}
                     </h3>
 
-                    {/* ✅ Show only Last Bet Till */}
                     {m.lastBetTime && (
                       <p className="text-sm text-red-500 font-medium text-center sm:text-left">
                         Last Bet Till: {formatDateTime(m.lastBetTime)}
@@ -105,7 +113,7 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* ✅ If user already placed bet */}
+                  {/* ✅ If user already placed a bet */}
                   {myBet ? (
                     <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-3 text-center space-y-2 transition-all hover:shadow-md">
                       <p className="text-sm font-medium text-green-700">
@@ -125,8 +133,8 @@ export default function Home() {
                           onClick={async () => {
                             if (!window.confirm("Cancel this bet?")) return;
                             await api.delete(`/bets/${myBet._id}`);
-                            fetchUserBets();
-                            fetchMatches();
+                            await fetchUserBets();
+                            await fetchMatches();
                           }}
                           className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
                         >
@@ -135,7 +143,7 @@ export default function Home() {
                       </div>
                     </div>
                   ) : (
-                    // 🧩 Show bet buttons if not expired
+                    // 🧩 Default buttons (before betting)
                     <div className="flex flex-col sm:flex-row gap-3 mt-4">
                       {deadline > now ? (
                         <>
@@ -185,13 +193,11 @@ export default function Home() {
                   <h3 className="font-semibold text-lg text-gray-800 mb-1 text-center sm:text-left">
                     {teamA} vs {teamB}
                   </h3>
-
                   {m.lastBetTime && (
                     <p className="text-sm text-red-500 font-medium text-center sm:text-left">
                       Last Bet Till: {formatDateTime(m.lastBetTime)}
                     </p>
                   )}
-
                   {deadline < now && (
                     <p className="mt-3 text-xs text-gray-400 italic text-center">
                       ⏰ Betting closed
@@ -204,14 +210,12 @@ export default function Home() {
         </section>
       )}
 
-      {/* ❌ No Matches */}
       {!loading && live.length === 0 && upcoming.length === 0 && (
         <p className="text-gray-500 text-center text-lg font-medium">
           No active or upcoming matches right now ⚡
         </p>
       )}
 
-      {/* ⚠️ Error */}
       {error && (
         <div className="text-center text-red-500 text-sm font-medium">{error}</div>
       )}
@@ -223,7 +227,7 @@ export default function Home() {
           team={selectedBet.team}
           onClose={() => setSelectedBet(null)}
           onSuccess={() => {
-            fetchUserBets();
+            fetchUserBets(); // ✅ instant refresh after placing bet
             fetchMatches();
           }}
         />
