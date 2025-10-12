@@ -6,18 +6,19 @@ import TossHistory from "./pages/TossHistory";
 import Wallet from "./pages/Wallet";
 import Rules from "./pages/Rules";
 import Login from "./pages/Login";
+import ChangePassword from "./pages/ChangePassword"; // ✅ added
 import { CurrencyProvider } from "./context/CurrencyContext";
-import ProtectedRoute from "./components/ProtectedRoute"; // ✅ import
+import ProtectedRoute from "./components/ProtectedRoute"; // ✅ already imported
 
 export default function App() {
   return (
     <CurrencyProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Route */}
+          {/* 🌐 Public Route */}
           <Route path="/login" element={<Login />} />
 
-          {/* Protected Routes */}
+          {/* 🔒 Protected Routes */}
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<UserLayout />}>
               <Route index element={<Home />} />
@@ -25,6 +26,7 @@ export default function App() {
               <Route path="history" element={<TossHistory />} />
               <Route path="wallet" element={<Wallet />} />
               <Route path="rules" element={<Rules />} />
+              <Route path="change-password" element={<ChangePassword />} /> {/* ✅ added route */}
             </Route>
           </Route>
         </Routes>
