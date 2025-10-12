@@ -4,14 +4,12 @@ import BetModal from "../components/BetModal";
 
 export default function Home() {
   const [matches, setMatches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedBet, setSelectedBet] = useState(null);
   const [userBets, setUserBets] = useState([]);
+  const [selectedBet, setSelectedBet] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  /* ------------------------------------------
-     Fetch Matches
-  ------------------------------------------ */
+  // 🔁 Fetch matches
   const fetchMatches = async () => {
     try {
       const res = await api.get("/matches");
@@ -19,15 +17,13 @@ export default function Home() {
       setError("");
     } catch (err) {
       console.error("❌ Error fetching matches:", err);
-      setError("Failed to load matches. Please try again later.");
+      setError("Failed to load matches");
     } finally {
       setLoading(false);
     }
   };
 
-  /* ------------------------------------------
-     Fetch User Bets
-  ------------------------------------------ */
+  // 👤 Fetch user bets
   const fetchUserBets = async () => {
     try {
       const res = await api.get("/bets/my");
@@ -47,42 +43,27 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  /* ------------------------------------------
-     Helpers: time + formatting
-  ------------------------------------------ */
+  // 🕒 helpers
   const formatDateTime = (date) =>
     new Date(date).toLocaleString("en-IN", {
       dateStyle: "medium",
       timeStyle: "short",
     });
 
-  // Parse date safely; return ms or null
-  const parseMs = (d) => {
-    if (!d) return null;
-    const ms = new Date(d).getTime();
-    return Number.isFinite(ms) ? ms : null;
-  };
+  const now = new Date();
 
-  const isBettingOpen = (m) => {
-    const deadlineMs = parseMs(m.lastBetTime);
-    if (deadlineMs === null) return true; // if invalid/missing, allow betting
-    return deadlineMs > Date.now();
-  };
-
-  // Hide expired cards from the panel
-  const activeMatches = matches.filter((m) => isBettingOpen(m));
+  const activeMatches = matches.filter(
+    (m) => !m.lastBetTime || new Date(m.lastBetTime) > now
+  );
   const live = activeMatches.filter((m) => m.status === "LIVE");
   const upcoming = activeMatches.filter((m) => m.status === "UPCOMING");
 
-  /* ------------------------------------------
-     Find user's bet for a match (supports both shapes)
-  ------------------------------------------ */
+  // ✅ Correct way to find user’s bet
   const getUserBet = (matchId) =>
-    userBets.find((b) => b.match === matchId || b.match?._id === matchId) || null;
+    userBets.find(
+      (b) => b.match && b.match._id === matchId // match populated object
+    ) || null;
 
-  /* ------------------------------------------
-     Render
-  ------------------------------------------ */
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 sm:p-6 space-y-10">
       {/* 🔴 LIVE MATCHES */}
@@ -96,17 +77,19 @@ export default function Home() {
             {live.map((m) => {
               const [teamA, teamB] = (m.title || "").split(/vs/i).map((t) => t.trim());
               const myBet = getUserBet(m._id);
+              const deadline = new Date(m.lastBetTime);
+              const expired = m.lastBetTime && deadline <= now;
 
               return (
                 <div
                   key={m._id}
                   className="bg-white border border-green-200 rounded-2xl shadow-md hover:shadow-lg transition-all p-5 flex flex-col justify-between"
                 >
+                  {/* ✅ Match title */}
                   <div>
                     <h3 className="text-lg sm:text-xl font-semibold text-green-700 mb-2 text-center sm:text-left">
                       {teamA} vs {teamB}
                     </h3>
-
                     {m.lastBetTime && (
                       <p className="text-sm text-red-500 font-medium text-center sm:text-left">
                         Last Bet Till: {formatDateTime(m.lastBetTime)}
@@ -114,57 +97,58 @@ export default function Home() {
                     )}
                   </div>
 
-                  {/* 🔁 Switch UI based on whether user has already bet */}
-                  {myBet ? (
-                    <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-3 text-center space-y-2 transition-all hover:shadow-md">
-                      <p className="text-sm font-medium text-green-700">
-                        ✅ You bet ₹{myBet.stake} on{" "}
-                        <span className="font-semibold">{myBet.side}</span>
-                      </p>
-                      <div className="flex gap-2 justify-center">
+                  {/* 🧩 Switch views */}
+                  {!expired ? (
+                    myBet ? (
+                      // ✅ User already bet here
+                      <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-3 text-center space-y-2">
+                        <p className="text-sm font-medium text-green-700">
+                          ✅ You bet ₹{myBet.stake} on{" "}
+                          <span className="font-semibold">{myBet.team}</span>
+                        </p>
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            onClick={() =>
+                              setSelectedBet({ match: m, team: myBet.team })
+                            }
+                            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold"
+                          >
+                            Bet More
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!window.confirm("Cancel this bet?")) return;
+                              await api.delete(`/bets/${myBet._id}`);
+                              await fetchUserBets();
+                              await fetchMatches();
+                            }}
+                            className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                          >
+                            Cancel Bet
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      // 🟦 No bet placed yet
+                      <div className="flex flex-col sm:flex-row gap-3 mt-4">
                         <button
-                          onClick={() => setSelectedBet({ match: m, team: myBet.side })}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                          onClick={() => setSelectedBet({ match: m, team: teamA })}
+                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all"
                         >
-                          Bet More
+                          Bet on {teamA}
                         </button>
                         <button
-                          onClick={async () => {
-                            if (!window.confirm("Cancel this bet?")) return;
-                            await api.delete(`/bets/${myBet._id}`);
-                            await fetchUserBets();
-                            await fetchMatches();
-                          }}
-                          className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+                          onClick={() => setSelectedBet({ match: m, team: teamB })}
+                          className="flex-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all"
                         >
-                          Cancel Bet
+                          Bet on {teamB}
                         </button>
                       </div>
-                    </div>
+                    )
                   ) : (
-                    <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                      {/* ✅ Buttons ALWAYS show while betting is open */}
-                      {isBettingOpen(m) ? (
-                        <>
-                          <button
-                            onClick={() => setSelectedBet({ match: m, team: teamA })}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all"
-                          >
-                            Bet on {teamA}
-                          </button>
-                          <button
-                            onClick={() => setSelectedBet({ match: m, team: teamB })}
-                            className="flex-1 bg-rose-600 hover:bg-rose-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all"
-                          >
-                            Bet on {teamB}
-                          </button>
-                        </>
-                      ) : (
-                        <p className="text-xs text-gray-400 italic text-center">
-                          ⏰ Betting closed
-                        </p>
-                      )}
-                    </div>
+                    <p className="mt-4 text-xs text-gray-400 italic text-center">
+                      ⏰ Betting closed
+                    </p>
                   )}
                 </div>
               );
@@ -222,8 +206,7 @@ export default function Home() {
           team={selectedBet.team}
           onClose={() => setSelectedBet(null)}
           onSuccess={() => {
-            // instant UI refresh after placing a bet
-            fetchUserBets();
+            fetchUserBets(); // instant refresh
             fetchMatches();
           }}
         />
