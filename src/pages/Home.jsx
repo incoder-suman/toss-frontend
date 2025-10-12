@@ -102,10 +102,26 @@ export default function Home() {
                     myBet ? (
                       // ✅ User already bet here
                       <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-3 text-center space-y-2">
-                        <p className="text-sm font-medium text-green-700">
-                          ✅ You bet ₹{myBet.stake} on{" "}
-                          <span className="font-semibold">{myBet.team}</span>
-                        </p>
+                        {/* ✅ Combined Bet Info */}
+<p className="text-sm font-medium text-green-700">
+  {(() => {
+    // sab bets same match ke liye nikal lo
+    const matchBets = userBets.filter(
+      (b) => b.match && b.match._id === m._id
+    );
+
+    // total stake aur last team find karo
+    const totalStake = matchBets.reduce((sum, b) => sum + (b.stake || 0), 0);
+    const lastTeam = matchBets[matchBets.length - 1]?.team || myBet.team;
+
+    return (
+      <>
+        ✅ You bet ₹{totalStake} on{" "}
+        <span className="font-semibold">{lastTeam}</span>
+      </>
+    );
+  })()}
+</p>
                         <div className="flex gap-2 justify-center">
                           <button
                             onClick={() =>
