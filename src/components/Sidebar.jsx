@@ -142,8 +142,8 @@ export default function Sidebar({ onNavigate }) {
       </div>
 
       {/* 💰 Wallet Display */}
-      <div className="bg-cyan-700 text-sm mb-4 px-3 py-2 rounded-lg shadow-inner space-y-1">
-        <div className="flex justify-between">
+      <div className="bg-cyan-700 text-sm mb-4 px-3 py-2 rounded-lg shadow-inner">
+        <div className="flex justify-between font-semibold">
           <span>
             BAL: {currency === "INR" ? "₹" : "$"}
             {convert(walletBalance)}
@@ -152,11 +152,6 @@ export default function Sidebar({ onNavigate }) {
             EXP: {currency === "INR" ? "₹" : "$"}
             {convert(expBalance)}
           </span>
-        </div>
-        <div className="text-xs text-right text-cyan-100">
-          Available:{" "}
-          {currency === "INR" ? "₹" : "$"}
-          {convert(walletBalance - expBalance)}
         </div>
       </div>
 
