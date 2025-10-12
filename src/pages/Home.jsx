@@ -116,16 +116,31 @@ export default function Home() {
                             Bet More
                           </button>
                           <button
-                            onClick={async () => {
-                              if (!window.confirm("Cancel this bet?")) return;
-                              await api.delete(`/bets/${myBet._id}`);
-                              await fetchUserBets();
-                              await fetchMatches();
-                            }}
-                            className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold"
-                          >
-                            Cancel Bet
-                          </button>
+  onClick={async () => {
+    if (!window.confirm("Cancel this bet?")) return;
+
+    try {
+      const res = await api.delete(`/bets/${myBet._id}`);
+      console.log("✅ Cancel bet response:", res.data);
+
+      // ✅ Instantly remove the cancelled bet from UI
+      setUserBets((prev) => prev.filter((b) => b._id !== myBet._id));
+
+      // ✅ Refresh matches (optional safety)
+      await fetchMatches();
+
+      // ✅ Optional feedback
+      alert("✅ Bet cancelled & refunded successfully!");
+    } catch (err) {
+      console.error("❌ Cancel bet error:", err);
+      alert("Error cancelling bet. Please try again.");
+    }
+  }}
+  className="bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all"
+>
+  Cancel Bet
+</button>
+
                         </div>
                       </div>
                     ) : (
