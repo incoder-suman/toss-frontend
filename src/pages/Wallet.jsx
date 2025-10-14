@@ -8,107 +8,155 @@ export default function Wallet() {
   const token = localStorage.getItem("userToken");
 
   /* ------------------------------------------------------------
-    🔁 Fetch all wallet transactions
+    🔁 Fetch wallet transactions (auto refresh every 15s)
   ------------------------------------------------------------ */
   useEffect(() => {
     if (!token) return;
+    let mounted = true;
 
     const fetchTransactions = async () => {
       try {
-        const res = await api.get("/wallet/transactions", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setTransactions(res.data.transactions || []);
+        const res = await api.get("/wallet/transactions"); // interceptor adds token
+        if (!mounted) return;
+
+        const data = res.data?.transactions || [];
+        setTransactions(data);
+        console.log(`📦 Transactions fetched: ${data.length}`);
       } catch (err) {
-        console.error("❌ Error fetching transactions:", err);
+        console.error("❌ Error fetching transactions:", err.response?.data || err.message);
       } finally {
-        setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
     fetchTransactions();
     const interval = setInterval(fetchTransactions, 15000);
-    return () => clearInterval(interval);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [token]);
 
   /* ------------------------------------------------------------
-    📱 WhatsApp Redirect for Admin Chat
+    📱 WhatsApp redirect for admin help
   ------------------------------------------------------------ */
   const handleWhatsAppRedirect = () => {
-    const phoneNumber = "918449060585"; // include country code
-    // const message = "Hello! I want to Deposit or Withdraw my tokens.";
-    window.location.href = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(
-      message
-    )}`;
+    const phoneNumber = "918449060585";
+    const message = "Hello! I want help with my wallet or bet transaction.";
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, "_blank");
   };
 
   /* ------------------------------------------------------------
-    🧠 Transaction Type Formatter
+    🧠 Transaction Description Formatter
   ------------------------------------------------------------ */
   const renderDescription = (txn) => {
     const t = txn.type;
     const meta = txn.meta || {};
+    const match = meta.matchName || "Unknown Match";
+    const side = meta.side ? ` (${meta.side})` : "";
+    const reason = meta.reason || "";
 
-    // 🧩 Betting Transactions
-    if (t === "BET_STAKE") {
-      return (
-        <>
-          <p className="font-semibold text-gray-800">
-            Bet on {meta.matchName || "Unknown Match"}
-          </p>
-          {meta.side && (
-            <p className="text-gray-500 text-xs sm:text-sm">
-              Your Bet: {meta.side}
+    switch (t) {
+      case "BET_STAKE":
+        return (
+          <>
+            <p className="font-semibold text-gray-800">
+              Bet Placed on {match}{side}
             </p>
-          )}
-        </>
-      );
-    }
-
-    if (t === "BET_WIN") {
-      return (
-        <>
-          <p className="font-semibold text-green-600">
-            Win bet on {meta.matchName || "Unknown Match"}
-          </p>
-          {meta.side && (
             <p className="text-gray-500 text-xs sm:text-sm">
-              Your Bet: {meta.side}
+              Amount staked for your bet.
             </p>
-          )}
-        </>
-      );
-    }
+          </>
+        );
 
-    // 🧩 Wallet & Admin Transactions
-    if (t === "ADMIN_CREDIT") {
-      return <p className="font-semibold text-green-600">Money Added To Wallet</p>;
-    }
+      case "BET_WIN":
+        return (
+          <>
+            <p className="font-semibold text-green-600">
+              Bet Won — {match}{side}
+            </p>
+            <p className="text-gray-500 text-xs sm:text-sm">
+              Winnings credited to your wallet.
+            </p>
+          </>
+        );
 
-    if (t === "WITHDRAW") {
-      return (
-        <p className="font-semibold text-red-600">
-          Money withdrawal from wallet
-        </p>
-      );
-    }
+      case "REVERSAL":
+      case "REFUND":
+      case "BET_CANCEL":
+        const reasonText =
+          reason === "USER_CANCELLED"
+            ? "Bet cancelled by you"
+            : reason === "ADMIN_CANCELLED"
+            ? "Bet cancelled by admin"
+            : reason === "MATCH_DRAW"
+            ? "Match ended in a draw"
+            : "Bet amount refunded";
 
-    if (t === "DEPOSIT") {
-      return (
-        <p className="font-semibold text-green-600">Deposit added</p>
-      );
-    }
+        return (
+          <>
+            <p className="font-semibold text-yellow-600">
+              {reasonText} — {match}{side}
+            </p>
+            <p className="text-gray-500 text-xs sm:text-sm">
+              Bet amount returned to your wallet.
+            </p>
+          </>
+        );
 
-    // Default fallback
-    return (
-      <p className="font-semibold text-gray-600 capitalize">
-        {t.replace("_", " ").toLowerCase()}
-      </p>
-    );
+      case "DEPOSIT":
+        return (
+          <>
+            <p className="font-semibold text-green-600">Deposit Successful</p>
+            <p className="text-gray-500 text-xs sm:text-sm">
+              Amount added to your wallet.
+            </p>
+          </>
+        );
+
+      case "WITHDRAW":
+        return (
+          <>
+            <p className="font-semibold text-red-600">Withdrawal Processed</p>
+            <p className="text-gray-500 text-xs sm:text-sm">
+              Amount deducted for withdrawal request.
+            </p>
+          </>
+        );
+
+      case "ADMIN_CREDIT":
+      case "ADMIN_DEBIT":
+        const label = t === "ADMIN_CREDIT" ? "Admin Credit Added" : "Admin Adjustment (Debit)";
+        return (
+          <>
+            <p className={`font-semibold ${t === "ADMIN_CREDIT" ? "text-green-600" : "text-red-600"}`}>
+              {label}
+            </p>
+            {meta.note && (
+              <p className="text-gray-500 text-xs sm:text-sm">{meta.note}</p>
+            )}
+          </>
+        );
+
+      default:
+        return (
+          <>
+            <p className="font-semibold text-gray-600 capitalize">
+              {String(t || "transaction").replace(/_/g, " ").toLowerCase()}
+            </p>
+            {meta.matchName && (
+              <p className="text-gray-500 text-xs sm:text-sm">
+                {match}{side}
+              </p>
+            )}
+          </>
+        );
+    }
   };
 
   /* ------------------------------------------------------------
-    🧾 Render Component
+    🧾 Render UI
   ------------------------------------------------------------ */
   return (
     <div className="p-4 sm:p-6 max-w-3xl mx-auto">
@@ -127,7 +175,7 @@ export default function Wallet() {
         </button>
       </div>
 
-      {/* Transaction Table */}
+      {/* Transactions Table */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden border border-cyan-100">
         <div className="bg-cyan-600 text-white text-sm font-semibold px-4 py-2">
           Transaction History
@@ -136,9 +184,7 @@ export default function Wallet() {
         {loading ? (
           <div className="p-4 text-center text-gray-500">Loading...</div>
         ) : transactions.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
-            No transactions yet.
-          </div>
+          <div className="p-4 text-center text-gray-500">No transactions yet.</div>
         ) : (
           <div className="divide-y divide-gray-100">
             {transactions.map((txn, i) => {
@@ -158,7 +204,7 @@ export default function Wallet() {
                     </div>
                   </div>
 
-                  {/* Timestamp + Balance */}
+                  {/* Timestamp & Balance */}
                   <div className="flex justify-between text-xs text-gray-400 mt-1">
                     <span>{new Date(txn.createdAt).toLocaleString()}</span>
                     {txn.balanceAfter != null && (
