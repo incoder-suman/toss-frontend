@@ -82,13 +82,13 @@ export default function Wallet() {
 
     // 🧩 Wallet & Admin Transactions
     if (t === "ADMIN_CREDIT") {
-      return <p className="font-semibold text-green-600">Token added by Admin</p>;
+      return <p className="font-semibold text-green-600">Money Added To Wallet</p>;
     }
 
     if (t === "WITHDRAW") {
       return (
         <p className="font-semibold text-red-600">
-          Money withdrawn from wallet
+          Money withdrawal from wallet
         </p>
       );
     }
