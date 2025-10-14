@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
-  Bets,
+  History,
   Wallet,
   Settings,
   LogOut,
@@ -94,7 +94,7 @@ export default function Sidebar({ onNavigate }) {
   --------------------------------------------------------- */
   const links = [
     { to: "/", label: "Home", icon: <Home size={18} /> },
-    { to: "/Bets", label: "Toss History", icon: <Bets size={18} /> },
+    { to: "/Bets", label: "Toss History", icon: <History size={18} /> },
     { to: "/wallet", label: "Wallet History", icon: <Wallet size={18} /> },
     { to: "/change-password", label: "Change Password", icon: <Lock size={18} /> }, // ✅ added
     { to: "/rules", label: "Rules", icon: <Settings size={18} /> },
