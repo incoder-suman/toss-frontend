@@ -61,7 +61,7 @@ export const placeBet = async (data) => {
 
 // 👤 Get all bets of the logged-in user
 export const getMyBets = async () => {
-  const res = await API.get("/bets/me");
+  const res = await API.get("/bets/my");
   return res.data;
 };
 
