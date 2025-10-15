@@ -15,7 +15,7 @@ export default function UserLayout() {
       >
         {/* Sidebar header (mobile close button) */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 sm:hidden">
-          <h1 className="font-bold text-xl text-cyan-600">TossBook</h1>
+          <h1 className="font-bold text-xl text-cyan-600">Freinds Toss Book</h1>
           <button onClick={() => setOpen(false)} className="text-gray-600">
             <X size={22} />
           </button>
