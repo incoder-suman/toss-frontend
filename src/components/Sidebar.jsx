@@ -114,7 +114,7 @@ export default function Sidebar({ onNavigate }) {
   --------------------------------------------------------- */
   const handleWhatsAppRedirect = () => {
     const phoneNumber = "918449060585";
-    const message = "Hello! I need help regarding my wallet or account.";
+    const message = " ";
     window.open(
       `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`,
       "_blank"
