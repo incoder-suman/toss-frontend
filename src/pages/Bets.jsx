@@ -13,7 +13,7 @@ export default function Bets() {
       const token = localStorage.getItem("userToken");
       if (!token) return;
 
-      const res = await api.get("/bets/me", {
+      const res = await api.get("/bets/my", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
