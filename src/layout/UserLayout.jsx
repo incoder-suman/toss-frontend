@@ -29,7 +29,7 @@ export default function UserLayout() {
         <button onClick={() => setOpen(true)} className="text-gray-700">
           <Menu size={24} />
         </button>
-        <h1 className="font-bold text-cyan-600 text-lg">TossBook</h1>
+        <h1 className="font-bold text-cyan-600 text-lg">Freinds Toss Book</h1>
         <div className="w-6" /> {/* placeholder for symmetry */}
       </div>
 
