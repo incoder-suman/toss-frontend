@@ -100,13 +100,15 @@ export default function Home() {
                   {/* ✅ Match title */}
                   <div>
                     <h3 className="text-lg sm:text-xl font-semibold text-green-700 mb-2 text-center sm:text-left">
-                      {teamA} vs {teamB}
+                      {teamA} V/S {teamB}
                     </h3>
                     {m.lastBetTime && (
                       <p className="text-sm text-red-500 font-medium text-center sm:text-left">
                         Last Bet Till: {formatDateTime(m.lastBetTime)}
                       </p>
+                      
                     )}
+                    <p>Toss Rate 98p</p>
                   </div>
 
                   {/* 🧩 Match content */}
