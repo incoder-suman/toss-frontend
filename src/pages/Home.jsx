@@ -97,21 +97,22 @@ export default function Home() {
                   key={m._id}
                   className="bg-white border border-green-200 rounded-2xl shadow-md hover:shadow-lg transition-all p-5 flex flex-col justify-between"
                 >
-                  {/* ✅ Match title */}
-                  <div>
-                    <h3 className="text-lg sm:text-xl font-semibold text-green-700 mb-2 text-center sm:text-left">
-                      {teamA} V/S {teamB}
-                    </h3>
-                    {m.lastBetTime && (
-                      <p className="text-sm text-red-500 font-medium text-center sm:text-left">
-                        Last Bet Till: {formatDateTime(m.lastBetTime)}
-                      </p>
-                      
-                    )}
-                    <p className="mt-2 text-center text-gray-800 font-semibold">
-  Toss Rate 98p
-</p>
-                  </div>
+                  {/* ✅ Match title block */}
+  <div className="w-full flex flex-col items-center text-center">
+    <h3 className="text-lg sm:text-xl font-semibold text-green-700 mb-2">
+      {teamA} V/S {teamB}
+    </h3>
+
+    {m.lastBetTime && (
+      <p className="text-sm text-red-500 font-medium">
+        Last Bet Till: {formatDateTime(m.lastBetTime)}
+      </p>
+    )}
+
+    <p className="mt-2 text-gray-900 font-semibold">
+      Toss Rate 98p
+    </p>
+  </div>
 
                   {/* 🧩 Match content */}
                   {!expired ? (
