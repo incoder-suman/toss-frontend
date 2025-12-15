@@ -108,7 +108,9 @@ export default function Home() {
                       </p>
                       
                     )}
-                    <p>Toss Rate 98p</p>
+                    <p className="mt-2 text-center text-gray-800 font-semibold">
+  Toss Rate 98p
+</p>
                   </div>
 
                   {/* 🧩 Match content */}
